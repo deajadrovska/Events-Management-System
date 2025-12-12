@@ -47,8 +47,7 @@ class EventController extends Controller
 
         Event::create($validated);
 
-        return redirect()->route('events.index')
-            ->with('success', 'Настанот е успешно креиран.');
+        return redirect()->route('events.index');
     }
 
     public function show(Event $event)
@@ -75,15 +74,13 @@ class EventController extends Controller
 
         $event->update($validated);
 
-        return redirect()->route('events.index')
-            ->with('success', 'Настанот е успешно ажуриран.');
+        return redirect()->route('events.index');
     }
 
     public function destroy(Event $event)
     {
         $event->delete();
 
-        return redirect()->route('events.index')
-            ->with('success', 'Настанот е успешно избришан.');
+        return redirect()->route('events.index');
     }
 }

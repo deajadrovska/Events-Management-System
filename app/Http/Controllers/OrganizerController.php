@@ -37,8 +37,8 @@ class OrganizerController extends Controller
 
         Organizer::create($validated);
 
-        return redirect()->route('organizers.index')
-            ->with('success', 'Организаторот е успешно креиран.');
+        return redirect()->route('organizers.index');
+
     }
 
     /**
@@ -65,15 +65,13 @@ class OrganizerController extends Controller
 
         $organizer->update($validated);
 
-        return redirect()->route('organizers.index')
-            ->with('success', 'Организаторот е успешно ажуриран.');
+        return redirect()->route('organizers.index');
     }
 
     public function destroy(Organizer $organizer)
     {
         $organizer->delete();
 
-        return redirect()->route('organizers.index')
-            ->with('success', 'Организаторот е успешно избришан.');
+        return redirect()->route('organizers.index');
     }
 }
