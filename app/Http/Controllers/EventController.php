@@ -2,30 +2,29 @@
 
 namespace App\Http\Controllers;
 
-//use App\EventTypeEnum;
-use App\Models\Event;
-use App\Models\Organizer;
-use Illuminate\Http\Request;
 use App\Enums\EventTypeEnum;
+use App\Models\Organizer;
+use App\Repositories\Contracts\EventRepositoryInterface;
+use Illuminate\Http\Request;
 
 class EventController extends Controller
 {
-    /**
-     * Display a listing of the resource.
-     */
+    protected EventRepositoryInterface $eventRepository;
+
+    public function __construct(EventRepositoryInterface $eventRepository)
+    {
+        $this->eventRepository = $eventRepository;
+    }
+
     public function index(Request $request)
     {
-        $query = Event::with('organizer');
+        $filters = [
+            'type' => $request->type,
+            'search' => $request->search,
+        ];
 
-        if ($request->has('type') && $request->type) {
-            $query->where('type', $request->type);
-        }
+        $events = $this->eventRepository->all($filters);
 
-        if ($request->has('search') && $request->search) {
-            $query->where('name', 'like', '%' . $request->search . '%');
-        }
-
-        $events = $query->paginate(10);
         return view('events.index', compact('events'));
     }
 
@@ -45,24 +44,35 @@ class EventController extends Controller
             'organizer_id' => 'required|exists:organizers,id',
         ]);
 
-        Event::create($validated);
+        $this->eventRepository->create($validated);
 
         return redirect()->route('events.index');
     }
 
-    public function show(Event $event)
+    public function show(int $id)
     {
-        $event->load('organizer');
+        $event = $this->eventRepository->find($id);
+
+        if (!$event) {
+            abort(404);
+        }
+
         return view('events.show', compact('event'));
     }
 
-    public function edit(Event $event)
+    public function edit(int $id)
     {
+        $event = $this->eventRepository->find($id);
+
+        if (!$event) {
+            abort(404);
+        }
+
         $organizers = Organizer::all();
         return view('events.edit', compact('event', 'organizers'));
     }
 
-    public function update(Request $request, Event $event)
+    public function update(Request $request, int $id)
     {
         $validated = $request->validate([
             'name' => 'required|string|max:255',
@@ -72,14 +82,14 @@ class EventController extends Controller
             'organizer_id' => 'required|exists:organizers,id',
         ]);
 
-        $event->update($validated);
+        $this->eventRepository->update($id, $validated);
 
         return redirect()->route('events.index');
     }
 
-    public function destroy(Event $event)
+    public function destroy(int $id)
     {
-        $event->delete();
+        $this->eventRepository->delete($id);
 
         return redirect()->route('events.index');
     }

@@ -2,31 +2,29 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\Organizer;
+use App\Repositories\Contracts\OrganizerRepositoryInterface;
 use Illuminate\Http\Request;
 
 class OrganizerController extends Controller
 {
-    /**
-     * Display a listing of the resource.
-     */
+    protected OrganizerRepositoryInterface $organizerRepository;
+
+    public function __construct(OrganizerRepositoryInterface $organizerRepository)
+    {
+        $this->organizerRepository = $organizerRepository;
+    }
+
     public function index()
     {
-        $organizers = Organizer::paginate(10);
+        $organizers = $this->organizerRepository->all();
         return view('organizers.index', compact('organizers'));
     }
 
-    /**
-     * Show the form for creating a new resource.
-     */
     public function create()
     {
         return view('organizers.create');
     }
 
-    /**
-     * Store a newly created resource in storage.
-     */
     public function store(Request $request)
     {
         $validated = $request->validate([
@@ -35,42 +33,49 @@ class OrganizerController extends Controller
             'phone_number' => 'required|string|max:20',
         ]);
 
-        Organizer::create($validated);
+        $this->organizerRepository->create($validated);
 
         return redirect()->route('organizers.index');
-
     }
 
-    /**
-     * Display the specified resource.
-     */
-    public function show(Organizer $organizer)
+    public function show(int $id)
     {
-        $organizer->load('events');
+        $organizer = $this->organizerRepository->getWithEvents($id);
+
+        if (!$organizer) {
+            abort(404);
+        }
+
         return view('organizers.show', compact('organizer'));
     }
 
-    public function edit(Organizer $organizer)
+    public function edit(int $id)
     {
+        $organizer = $this->organizerRepository->find($id);
+
+        if (!$organizer) {
+            abort(404);
+        }
+
         return view('organizers.edit', compact('organizer'));
     }
 
-    public function update(Request $request, Organizer $organizer)
+    public function update(Request $request, int $id)
     {
         $validated = $request->validate([
             'full_name' => 'required|string|max:255',
-            'email' => 'required|email|unique:organizers,email,' . $organizer->id,
+            'email' => 'required|email|unique:organizers,email,' . $id,
             'phone_number' => 'required|string|max:20',
         ]);
 
-        $organizer->update($validated);
+        $this->organizerRepository->update($id, $validated);
 
         return redirect()->route('organizers.index');
     }
 
-    public function destroy(Organizer $organizer)
+    public function destroy(int $id)
     {
-        $organizer->delete();
+        $this->organizerRepository->delete($id);
 
         return redirect()->route('organizers.index');
     }
